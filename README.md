@@ -51,4 +51,3 @@ py -3.12 tests/engine_check.py
 
 Hook lifecycle, timer cleanup, wallpaper replacement, and UI behavior were checked locally. Windows taskbar responsiveness and in-game timing still need testing on a Windows PC. This helper does not change game files or read game memory. Disable pre-edit is not implemented.
 
-[YouTube — @sg0hann](https://www.youtube.com/@sg0hann)
