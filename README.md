@@ -1,0 +1,54 @@
+# Creative Destruction — Quick Edit
+
+Windows edit helper by **sg0hann**. Current version: **1.9**.
+
+Press **G**, move to an edit shape, and the helper selects and applies it. Auto reset chooses the top/default shape and starts enabled.
+
+## Download
+
+Open [Actions → Build Windows app](https://github.com/samimustafaa/creative-destruction-eor-script/actions/workflows/windows-build.yml), select a successful run, and download the **QuickEdit-Windows** artifact. Extract it and open `QuickEdit.exe`. No Python installation is needed for the built app.
+
+## Controls
+
+| Key | Action |
+| --- | --- |
+| F6 | Start / pause |
+| F10 | Exit |
+| G | Open / cancel an edit |
+| Esc | Cancel |
+
+Use windowed or borderless mode with `client.exe`. Keep **Select shape only** unchecked for automatic apply. **Auto reset (top/default)** can be turned ON or OFF. Green button and dot mean the helper is enabled.
+
+## Wallpapers and performance
+
+- One static JPG/PNG wallpaper at a time; importing replaces the current one.
+- Your selected wallpaper is saved between launches. Original image files stay intact.
+- Fixed window size, transparent settings panel, and no wallpaper animation loop.
+- Mouse tracking runs only during edits; hooks run separately from the UI.
+- Workers sleep while idle. High-resolution timers are requested only during editing/clicks.
+- **360 Hz is a scan target**, not a guaranteed detection rate. Start with Fast; use Balanced or a longer click hold if inputs are missed.
+
+## Run from source (Windows, Python 3.12)
+
+```powershell
+py -3.12 -m pip install -r requirements.txt
+py -3.12 creative_destruction_edit.py
+```
+
+## Build an EXE (Windows)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build.ps1
+```
+
+Output: `dist/QuickEdit/QuickEdit.exe`. The script uses PyInstaller; the app and assets are bundled together. GitHub Actions runs the same build on Windows.
+
+## Checks
+
+```powershell
+py -3.12 tests/engine_check.py
+```
+
+Hook lifecycle, timer cleanup, wallpaper replacement, and UI behavior were checked locally. Windows taskbar responsiveness and in-game timing still need testing on a Windows PC. This helper does not change game files or read game memory. Disable pre-edit is not implemented.
+
+[YouTube — @sg0hann](https://www.youtube.com/@sg0hann)
