@@ -1,12 +1,9 @@
-# Quick Edit v1.10.0
+# Quick Edit v1.11.0
 
 Made by sg0hann.
 
-- Larger, bold green confirmations when settings or presets are applied.
-- Black Windows title-bar styling.
-- Fixed default background; custom wallpaper controls removed.
-- Dedicated input-hook thread, edit-only mouse tracking, and low-overhead idle mode.
+- New transparent Gohan + QE crest for the EXE, taskbar, title bar, and app header.
+- Blue C.D. logo under Quick Edit replaces the plain Creative Destruction subtitle.
+- Includes multiple Windows icon sizes from 16px to 256px.
 
-Download QuickEdit.exe directly or extract QuickEdit-Windows.zip. Source files and assets are included in QuickEdit-source.zip.
-
-Windows taskbar responsiveness and in-game timing still need testing on your PC.
+Download QuickEdit.exe or extract QuickEdit-Windows.zip. Complete source and assets are in QuickEdit-source.zip.

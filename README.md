@@ -1,6 +1,6 @@
 # Creative Destruction — Quick Edit
 
-Windows edit helper by **sg0hann**. Current version: **1.10**.
+Windows edit helper by **sg0hann**. Current version: **1.11**.
 
 Press **G**, move to an edit shape, and the helper selects and applies it. Auto reset chooses the top/default shape and starts enabled.
 
@@ -28,6 +28,8 @@ Use windowed or borderless mode with `client.exe`. Keep **Select shape only** un
 
 ## Wallpapers and performance
 
+- Gohan + QE icon in the EXE, taskbar, title bar, and header.
+- Blue C.D. wordmark beneath Quick Edit.
 - Fixed bundled background; custom wallpaper controls have been removed.
 - Black Windows title bar with light text (supported Windows versions).
 - Settings-applied confirmations are larger, bold, and green.

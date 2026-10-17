@@ -164,12 +164,15 @@ class AppUI:
         self.auto_reset=tk.BooleanVar(value=getattr(args,"auto_reset",True));self.select_only=tk.BooleanVar(value=args.select_only)
         self.process=tk.StringVar(value=args.process)
         self.entries=[];self.focused_input=None;self.hitboxes=[];self.button_shapes={};self.last_source=None
-        self.background_photo=None;self.header_icon=None;self.wallpaper_error=None
+        self.background_photo=None;self.header_icon=None;self.cd_logo=None;self.app_art=None;self.cd_art=None;self.wallpaper_error=None
         self.overlay_cache=None;self.paint_cache={};self.last_enabled=None;self.last_canvas_size=None
         root.title("Quick Edit • sg0hann");root.geometry("1200x720");root.resizable(False,False);root.configure(bg=self.BG)
         try:
-            self.icon=ImageTk.PhotoImage(Image.open(resource_path("assets/app.png")));root.iconphoto(True,self.icon)
+            with Image.open(resource_path("assets/app.png")) as image:self.app_art=image.convert("RGBA")
+            self.window_icons=[ImageTk.PhotoImage(self.app_art.resize((size,size),Image.Resampling.LANCZOS)) for size in (16,32,48,256)]
+            root.iconphoto(True,*self.window_icons)
             if os.name=="nt":root.iconbitmap(str(resource_path("assets/app.ico")))
+            with Image.open(resource_path("assets/cd-logo.png")) as image:self.cd_art=image.convert("RGBA")
         except Exception:pass
         self.canvas=tk.Canvas(root,bg=self.BG,highlightthickness=0,bd=0,takefocus=True);self.canvas.pack(fill="both",expand=True)
         self.background_item=self.canvas.create_image(0,0,anchor="nw")
@@ -208,12 +211,14 @@ class AppUI:
         self.hitboxes.append((key,box,command))
     def draw_ui(self):
         if not self.root.winfo_exists():return
-        from PIL import Image,ImageTk
+        from PIL import Image,ImageOps,ImageTk
         c=self.canvas;c.delete("ui");self.hitboxes=[];self.button_shapes={};self.paint_cache.clear();self.last_enabled=None
-        self.text(88,27,"QUICK EDIT",22,bold=True);self.text(89,58,"CREATIVE DESTRUCTION",9,color="#d1d1dc")
+        self.text(100,7,"QUICK EDIT",22,bold=True)
         try:
-            self.header_icon=ImageTk.PhotoImage(Image.open(resource_path("assets/app.png")).resize((round(44*self.scale_x),round(44*self.scale_y))))
-            c.create_image(30*self.scale_x,25*self.scale_y,anchor="nw",image=self.header_icon,tags="ui")
+            self.header_icon=ImageTk.PhotoImage(self.app_art.resize((round(64*self.scale_x),round(64*self.scale_y)),Image.Resampling.LANCZOS))
+            c.create_image(23*self.scale_x,8*self.scale_y,anchor="nw",image=self.header_icon,tags=("ui","app_brand"))
+            self.cd_logo=ImageTk.PhotoImage(ImageOps.contain(self.cd_art,(round(155*self.scale_x),round(32*self.scale_y)),Image.Resampling.LANCZOS))
+            c.create_image(193*self.scale_x,45*self.scale_y,anchor="n",image=self.cd_logo,tags=("ui","cd_brand"))
         except Exception:pass
         self.text(1050,30,"BY SG0HANN",9,bold=True)
         self.dot=c.create_oval(*self.rect((48,112,9,9)),fill="#a6a6b0",outline="",tags="ui")
