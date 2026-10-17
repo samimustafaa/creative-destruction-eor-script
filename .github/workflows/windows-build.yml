@@ -1,0 +1,36 @@
+name: Build Windows app
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-build.txt
+      - name: Check syntax and engine lifecycle
+        shell: pwsh
+        run: |
+          python -m py_compile creative_destruction_edit.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tests/engine_check.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build EXE
+        shell: pwsh
+        run: ./build.ps1
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: QuickEdit-Windows
+          path: dist/QuickEdit/
+          if-no-files-found: error
+          retention-days: 30

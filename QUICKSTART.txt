@@ -1,0 +1,23 @@
+QUICK EDIT — made by sg0hann
+
+Open QuickEdit.exe, click Start, then return to Creative Destruction.
+Edit: press G and move to your shape. The app confirms and applies it.
+Reset: press G and move to the TOP/default shape. It restores automatically.
+Auto reset uses an ON/OFF switch and starts ON. The switch applies immediately.
+Keep Select shape only unchecked for automatic apply.
+
+F6: start/pause. F10: exit. Esc: cancel.
+Use windowed or borderless mode. No Python installation is needed.
+After changing settings: Apply settings, then Start/F6.
+360 Hz is a scan target; the actual scan rate is displayed and depends on your PC.
+If clicks are missed, try Balanced or a 16 ms click hold.
+
+Idle mode: mouse hook and high-resolution timers are disabled.
+Input hooks run on a separate thread from the window.
+The window size is locked. Static wallpapers use no animation loop.
+Change wallpaper accepts still JPG/PNG only and replaces the current wallpaper.
+Only one imported wallpaper is stored. Your original image files are left intact.
+Your chosen wallpaper is saved and restored when you reopen the app.
+Green button + green dot mean the helper is ON.
+
+YouTube: https://www.youtube.com/@sg0hann
