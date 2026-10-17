@@ -158,12 +158,12 @@ class AppUI:
         self.tk=tk;self.root=root;self.state=state;self.stats=stats;self.args=args;self.reset=reset
         self.foreground_game=foreground_game;self.stop=stop;self.events=events;self.messagebox=messagebox
         self.scale_x=self.scale_y=1.0;self.hover=None;self.pressed=None;self.animations={};self.hover_timer=None
+        self.success_message=None
         self.last=tk.StringVar(value="Use borderless or windowed mode.")
         self.values=[tk.IntVar(value=v) for v in (args.stable_ms,args.apply_delay_ms,args.click_ms,args.scan_hz)]
         self.auto_reset=tk.BooleanVar(value=getattr(args,"auto_reset",True));self.select_only=tk.BooleanVar(value=args.select_only)
         self.process=tk.StringVar(value=args.process)
         self.entries=[];self.focused_input=None;self.hitboxes=[];self.button_shapes={};self.last_source=None
-        self.wallpaper_name="Default wallpaper"
         self.background_photo=None;self.header_icon=None;self.wallpaper_error=None
         self.overlay_cache=None;self.paint_cache={};self.last_enabled=None;self.last_canvas_size=None
         root.title("Quick Edit • sg0hann");root.geometry("1200x720");root.resizable(False,False);root.configure(bg=self.BG)
@@ -187,7 +187,7 @@ class AppUI:
         self.select_only.trace_add("write",lambda *unused:self.paint_select_only())
         self.last.trace_add("write",lambda *unused:self.update_last())
         self.load_wallpaper()
-        root.protocol("WM_DELETE_WINDOW",self.close);root.after(50,self.draw_ui);root.after(100,self.refresh)
+        root.protocol("WM_DELETE_WINDOW",self.close);root.after(50,self.draw_ui);root.after(80,self.style_titlebar);root.after(100,self.refresh)
 
     def rect(self,box):
         x,y,w,h=box;return x*self.scale_x,y*self.scale_y,(x+w)*self.scale_x,(y+h)*self.scale_y
@@ -245,8 +245,6 @@ class AppUI:
         self.button("apply",(995,463,151,38),"Apply settings",self.apply)
         self.text(490,530,"Choose your pace. Make it yours.",9,color="#babac6")
         self.text(29,681,"Made by sg0hann",10)
-        self.text(322,682,"Background",9,tag="wall_caption",width=365)
-        self.button("add",(750,671,220,32),"Change wallpaper…",self.add_wallpaper)
         self.shape((1039,680,24,17),"#ff4147",outline="",radius=5)
         c.create_polygon(1048*self.scale_x,684*self.scale_y,1048*self.scale_x,693*self.scale_y,1056*self.scale_x,688.5*self.scale_y,fill="white",tags="ui")
         self.text(1072,679,"YouTube ↗",10)
@@ -310,7 +308,7 @@ class AppUI:
         self.state["enabled"]=not self.state["enabled"];self.reset();self.refresh(schedule=False)
     def preset(self,name):
         for var,value in zip(self.values,self.PRESETS[name]):var.set(value)
-        self.apply();self.last.set(name+" applied. Start or press F6 to resume.")
+        self.apply();self.show_success(name+" applied.\nStart or press F6 to resume.")
     def paint_presets(self):
         try:values=tuple(v.get() for v in self.values)
         except Exception:return
@@ -329,12 +327,18 @@ class AppUI:
         self.state["enabled"]=False;self.reset()
         self.args.stable_ms,self.args.apply_delay_ms,self.args.click_ms,self.args.scan_hz=values
         self.args.select_only=self.select_only.get();self.args.auto_reset=self.auto_reset.get();self.args.process=process
-        self.paint_presets();self.last.set("Settings applied. Start or press F6 to resume.");self.refresh(schedule=False)
+        self.paint_presets();self.show_success("Settings applied.\nStart or press F6 to resume.");self.refresh(schedule=False)
     def paint_text(self,tag,value):
         if self.paint_cache.get(tag)!=value:
             self.canvas.itemconfigure(tag,text=value);self.paint_cache[tag]=value
+    def show_success(self,message):
+        self.success_message=message;self.last.set(message)
     def update_last(self):
-        if self.canvas.winfo_exists():self.canvas.itemconfigure("last",text=self.last.get())
+        if self.canvas.winfo_exists():
+            success=self.last.get()==self.success_message
+            size=14 if success else 10
+            self.canvas.itemconfigure("last",text=self.last.get(),fill="#4ee38a" if success else self.TEXT,
+                font=(UI_FONT,max(8,round(size*min(self.scale_x,self.scale_y))),"bold" if success else "normal"))
     def refresh(self,schedule=True):
         while True:
             try:kind,value=self.events.get_nowait()
@@ -356,7 +360,6 @@ class AppUI:
         self.paint_text("metrics",f"Processing {self.stats['processing_ms']:.1f} ms  /  Scan {self.stats.get('actual_hz',0):.0f} Hz\nApply clicks {self.stats['applied']}")
         if changed and self.hover_timer is None:self.animate_hover()
         self.last_enabled=enabled
-        self.paint_text("wall_caption",self.wallpaper_name[:32]+"  ·  JPG / PNG")
         if schedule and not self.stop.is_set():self.root.after(150 if self.root.focus_displayof() else 750,self.refresh)
     def resize(self,event):
         size=(event.width,event.height)
@@ -368,53 +371,28 @@ class AppUI:
         import webbrowser
         webbrowser.open("https://www.youtube.com/@sg0hann")
 
+    def style_titlebar(self):
+        if os.name!="nt":return
+        try:
+            native=C.WinDLL("user32");dwm=C.WinDLL("dwmapi")
+            native.GetAncestor.argtypes=[W.HWND,W.UINT];native.GetAncestor.restype=W.HWND
+            dwm.DwmSetWindowAttribute.argtypes=[W.HWND,W.DWORD,C.c_void_p,W.DWORD]
+            dwm.DwmSetWindowAttribute.restype=C.c_long
+            hwnd=native.GetAncestor(self.root.winfo_id(),2)
+            dark=C.c_int(1)
+            if dwm.DwmSetWindowAttribute(hwnd,20,C.byref(dark),C.sizeof(dark))!=0:
+                dwm.DwmSetWindowAttribute(hwnd,19,C.byref(dark),C.sizeof(dark))
+            # Windows 11 caption/border/text colors; older versions retain dark mode.
+            for attribute,color in ((34,0x000000),(35,0x000000),(36,0xFFFFFF)):
+                value=W.DWORD(color)
+                dwm.DwmSetWindowAttribute(hwnd,attribute,C.byref(value),C.sizeof(value))
+        except (OSError,AttributeError):pass
     def load_wallpaper(self):
-        from pathlib import Path
         from PIL import Image,ImageOps
-        self.wall_folder=Path(os.environ.get("LOCALAPPDATA",str(Path.home())))/"CDQuickEdit"
-        self.wall_file=self.wall_folder/"active_wallpaper.jpg"
-        path=self.wall_file if self.wall_file.is_file() else resource_path("assets/wallpaper.jpg")
-        try:
-            with Image.open(path) as image:
-                if image.format not in ("JPEG","PNG") or getattr(image,"is_animated",False):
-                    raise ValueError("Choose a still JPG or PNG image.")
-                self.last_source=ImageOps.exif_transpose(image).convert("RGB")
-                self.last_source.thumbnail((1200,720),Image.Resampling.LANCZOS)
-            self.wallpaper_name="Custom wallpaper" if path==self.wall_file else "Default wallpaper"
-        except Exception:
-            with Image.open(resource_path("assets/wallpaper.jpg")) as image:
-                self.last_source=image.convert("RGB");self.last_source.thumbnail((1200,720))
-            self.wallpaper_name="Default wallpaper"
-    def replace_wallpaper(self,file):
-        from pathlib import Path
-        from PIL import Image,ImageOps
-        if Path(file).suffix.lower() not in (".jpg",".jpeg",".png"):
-            raise ValueError("Only still JPG and PNG wallpapers are supported.")
-        with Image.open(file) as image:
-            if image.format not in ("JPEG","PNG") or getattr(image,"is_animated",False):
-                raise ValueError("Only still JPG and PNG wallpapers are supported.")
-            normalized=ImageOps.exif_transpose(image).convert("RGBA")
-            normalized.thumbnail((1200,720),Image.Resampling.LANCZOS)
-            background=Image.new("RGB",normalized.size,(9,10,13))
-            background.paste(normalized,mask=normalized.getchannel("A"))
-        self.wall_folder.mkdir(parents=True,exist_ok=True)
-        temporary=self.wall_file.with_suffix(".tmp")
-        try:
-            background.save(temporary,format="JPEG",quality=92)
-            os.replace(temporary,self.wall_file)
-        finally:
-            temporary.unlink(missing_ok=True)
-        # Exactly one managed wallpaper; importing replaces it rather than building a playlist.
-        self.last_source=background;self.wallpaper_name="Custom wallpaper"
-        self.render_wallpaper(self.last_source)
-        self.paint_text("wall_caption",self.wallpaper_name+"  ·  JPG / PNG")
-        self.last.set("Wallpaper replaced.")
-    def add_wallpaper(self):
-        from tkinter import filedialog
-        file=filedialog.askopenfilename(parent=self.root,title="Replace wallpaper (JPG or PNG)",filetypes=[("JPG / PNG","*.jpg *.jpeg *.png")])
-        if not file:return
-        try:self.replace_wallpaper(file)
-        except Exception as error:self.messagebox.showerror("Wallpaper",str(error),parent=self.root)
+        # A fixed bundled background: previous custom-wallpaper settings are ignored.
+        with Image.open(resource_path("assets/wallpaper.jpg")) as image:
+            self.last_source=ImageOps.exif_transpose(image).convert("RGB")
+            self.last_source.thumbnail((1200,720),Image.Resampling.LANCZOS)
     def render_wallpaper(self,frame):
         from PIL import Image,ImageOps,ImageDraw,ImageTk
         w=max(1,self.canvas.winfo_width());h=max(1,self.canvas.winfo_height())

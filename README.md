@@ -1,6 +1,6 @@
 # Creative Destruction — Quick Edit
 
-Windows edit helper by **sg0hann**. Current version: **1.9**.
+Windows edit helper by **sg0hann**. Current version: **1.10**.
 
 Press **G**, move to an edit shape, and the helper selects and applies it. Auto reset chooses the top/default shape and starts enabled.
 
@@ -21,8 +21,9 @@ Use windowed or borderless mode with `client.exe`. Keep **Select shape only** un
 
 ## Wallpapers and performance
 
-- One static JPG/PNG wallpaper at a time; importing replaces the current one.
-- Your selected wallpaper is saved between launches. Original image files stay intact.
+- Fixed bundled background; custom wallpaper controls have been removed.
+- Black Windows title bar with light text (supported Windows versions).
+- Settings-applied confirmations are larger, bold, and green.
 - Fixed window size, transparent settings panel, and no wallpaper animation loop.
 - Mouse tracking runs only during edits; hooks run separately from the UI.
 - Workers sleep while idle. High-resolution timers are requested only during editing/clicks.
@@ -49,5 +50,5 @@ Output: `dist/QuickEdit/QuickEdit.exe`. The script uses PyInstaller; the app and
 py -3.12 tests/engine_check.py
 ```
 
-Hook lifecycle, timer cleanup, wallpaper replacement, and UI behavior were checked locally. Windows taskbar responsiveness and in-game timing still need testing on a Windows PC. This helper does not change game files or read game memory. Disable pre-edit is not implemented.
+Hook lifecycle, timer cleanup, settings confirmations, and UI behavior were checked locally. Windows taskbar responsiveness and in-game timing still need testing on a Windows PC. This helper does not change game files or read game memory. Disable pre-edit is not implemented.
 

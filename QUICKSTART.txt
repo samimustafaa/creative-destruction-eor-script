@@ -15,9 +15,8 @@ If clicks are missed, try Balanced or a 16 ms click hold.
 Idle mode: mouse hook and high-resolution timers are disabled.
 Input hooks run on a separate thread from the window.
 The window size is locked. Static wallpapers use no animation loop.
-Change wallpaper accepts still JPG/PNG only and replaces the current wallpaper.
-Only one imported wallpaper is stored. Your original image files are left intact.
-Your chosen wallpaper is saved and restored when you reopen the app.
+The fixed default background is always used; custom wallpapers are disabled.
+Settings-applied confirmations are bigger and green.
 Green button + green dot mean the helper is ON.
 
 YouTube: https://www.youtube.com/@sg0hann
