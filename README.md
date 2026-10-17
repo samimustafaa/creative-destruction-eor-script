@@ -6,7 +6,14 @@ Press **G**, move to an edit shape, and the helper selects and applies it. Auto 
 
 ## Download
 
-Open [Actions → Build Windows app](https://github.com/samimustafaa/creative-destruction-eor-script/actions/workflows/windows-build.yml), select a successful run, and download the **QuickEdit-Windows** artifact. Extract it and open `QuickEdit.exe`. No Python installation is needed for the built app.
+Open the [latest release](https://github.com/samimustafaa/creative-destruction-eor-script/releases/latest).
+
+- **QuickEdit.exe** — standalone Windows app.
+- **QuickEdit-Windows.zip** — app and short README.
+- **QuickEdit-source.zip** — complete source, assets, and build instructions.
+- **creative_destruction_edit.py** — Python script only (needs dependencies and the `assets` folder).
+
+No Python installation is needed for the built app. Close older helper instances before opening the new one.
 
 ## Controls
 

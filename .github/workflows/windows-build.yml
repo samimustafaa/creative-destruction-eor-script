@@ -3,6 +3,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Publish the version in VERSION to GitHub Releases'
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -34,3 +39,33 @@ jobs:
           path: dist/QuickEdit/
           if-no-files-found: error
           retention-days: 30
+
+  publish:
+    needs: build
+    if: >-
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[release]')) ||
+      (github.event_name == 'workflow_dispatch' && inputs.publish_release)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Download Windows build and publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(tr -d '\r\n' < VERSION)"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Invalid release version"; exit 1; }
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name QuickEdit-Windows --dir release-files
+          test -s release-files/QuickEdit.exe
+          test -s release-files/README.txt
+          (cd release-files && zip -9 ../QuickEdit-Windows.zip QuickEdit.exe README.txt)
+          git archive --format=zip --prefix=QuickEdit-source/ -o QuickEdit-source.zip HEAD
+          gh release create "v$version" \
+            release-files/QuickEdit.exe QuickEdit-Windows.zip QuickEdit-source.zip creative_destruction_edit.py \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "Quick Edit v$version" --notes-file RELEASE_NOTES.md
