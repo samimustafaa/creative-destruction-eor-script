@@ -6,7 +6,9 @@ Reset: press G and move to the TOP/default shape. It restores automatically.
 Auto reset uses an ON/OFF switch and starts ON. The switch applies immediately.
 Keep Select shape only unchecked for automatic apply.
 
-F6: start/pause. F10: exit. Esc: cancel.
+F6: start/pause. F10: exit completely. Esc: cancel.
+Close X: hide to the Windows system tray and keep running.
+Right-click the tray icon: Open, Start/Pause, or Quit.
 Use windowed or borderless mode. No Python installation is needed.
 After changing settings: Apply settings, then Start/F6.
 360 Hz is a scan target; the actual scan rate is displayed and depends on your PC.

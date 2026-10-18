@@ -5,7 +5,7 @@ function Check-ExitCode {
 }
 py -3.12 -m pip install -r requirements-build.txt
 Check-ExitCode
-py -3.12 -m PyInstaller --noconfirm --clean --onefile --windowed --name QuickEdit --icon assets/app.ico --add-data "assets;assets" --collect-submodules mss creative_destruction_edit.py
+py -3.12 -m PyInstaller --noconfirm --clean --onefile --windowed --name QuickEdit --icon assets/app.ico --add-data "assets;assets" --collect-submodules mss --hidden-import pystray._win32 creative_destruction_edit.py
 Check-ExitCode
 New-Item -ItemType Directory -Force dist/QuickEdit | Out-Null
 Copy-Item dist/QuickEdit.exe dist/QuickEdit/QuickEdit.exe -Force

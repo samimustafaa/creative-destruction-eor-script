@@ -1,9 +1,10 @@
-# Quick Edit v1.11.0
+# Quick Edit v1.12.0
 
 Made by sg0hann.
 
-- New transparent Gohan + QE crest for the EXE, taskbar, title bar, and app header.
-- Blue C.D. logo under Quick Edit replaces the plain Creative Destruction subtitle.
-- Includes multiple Windows icon sizes from 16px to 256px.
+- Closing the window hides it to the Windows system tray without stopping the helper.
+- Right-click the Gohan tray icon to Open, Start/Pause, or Quit.
+- Clicking the tray icon reopens the window. F10 still exits completely.
+- Hidden windows skip UI painting and foreground-process lookups.
 
 Download QuickEdit.exe or extract QuickEdit-Windows.zip. Complete source and assets are in QuickEdit-source.zip.

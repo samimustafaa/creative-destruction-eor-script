@@ -30,6 +30,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tests/engine_check.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tests/tray_check.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build EXE
         shell: pwsh
         run: ./build.ps1

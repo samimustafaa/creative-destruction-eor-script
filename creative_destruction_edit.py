@@ -1,6 +1,6 @@
 """CD Quick Edit: a Windows desktop helper for Creative Destruction.
 
-Install: py -m pip install pillow numpy mss
+Install: py -m pip install -r requirements.txt
 Run the Windows app: QuickEdit.exe
 Source version: py creative_destruction_edit.py
 Click Start, return to the game, press G and move to a highlighted edit.
@@ -158,6 +158,7 @@ class AppUI:
         self.tk=tk;self.root=root;self.state=state;self.stats=stats;self.args=args;self.reset=reset
         self.foreground_game=foreground_game;self.stop=stop;self.events=events;self.messagebox=messagebox
         self.scale_x=self.scale_y=1.0;self.hover=None;self.pressed=None;self.animations={};self.hover_timer=None
+        self.tray=None;self.tray_thread=None;self.tray_ready=False;self.tray_starting=False;self.tray_enabled=None;self.closing=False
         self.success_message=None
         self.last=tk.StringVar(value="Use borderless or windowed mode.")
         self.values=[tk.IntVar(value=v) for v in (args.stable_ms,args.apply_delay_ms,args.click_ms,args.scan_hz)]
@@ -190,7 +191,8 @@ class AppUI:
         self.select_only.trace_add("write",lambda *unused:self.paint_select_only())
         self.last.trace_add("write",lambda *unused:self.update_last())
         self.load_wallpaper()
-        root.protocol("WM_DELETE_WINDOW",self.close);root.after(50,self.draw_ui);root.after(80,self.style_titlebar);root.after(100,self.refresh)
+        root.protocol("WM_DELETE_WINDOW",self.hide_to_tray);root.after(50,self.draw_ui);root.after(80,self.style_titlebar);root.after(100,self.refresh)
+        self.start_tray()
 
     def rect(self,box):
         x,y,w,h=box;return x*self.scale_x,y*self.scale_y,(x+w)*self.scale_x,(y+h)*self.scale_y
@@ -230,6 +232,7 @@ class AppUI:
         self.text(29,374,self.last.get(),10,tag="last",width=380)
         self.text(29,425,"F6  Start / pause   ·   F10  Exit",9)
         self.text(29,453,"G → choose shape → automatic apply",9)
+        self.text(29,485,"Close window → system tray. Right-click → Quit.",9,color=self.MUTED)
         self.text(490,109,"Response",14,bold=True);self.text(920,112,"Less waiting. More control.",9)
         for i,name in enumerate(self.PRESETS):
             self.button("preset_"+name,(490+i*163,137,154,35),name,lambda n=name:self.preset(n))
@@ -349,11 +352,20 @@ class AppUI:
             try:kind,value=self.events.get_nowait()
             except queue.Empty:break
             if kind=="quit":self.close();return
+            if kind=="show":self.show_window();continue
+            if kind=="toggle":self.toggle();continue
+            if kind=="tray_ready":
+                self.tray_ready=True;self.tray_starting=False;self.update_tray();continue
+            if kind=="tray_error":
+                self.tray_ready=False;self.tray_starting=False
+                self.show_window();self.last.set("Tray unavailable: "+str(value)+". F10 exits.");continue
             self.last.set(str(value))
-        enabled=self.state["enabled"];phase=self.state["stage"];game=self.foreground_game() if enabled else None
-        if self.root.state()=="iconic":
-            if schedule and not self.stop.is_set():self.root.after(500,self.refresh)
+        self.update_tray()
+        if self.root.state() in ("iconic","withdrawn"):
+            # Drain tray/hotkey events, but skip UI painting and process lookups while hidden.
+            if schedule and not self.stop.is_set():self.root.after(200,self.refresh)
             return
+        enabled=self.state["enabled"];phase=self.state["stage"];game=self.foreground_game() if enabled else None
         status="Paused" if not enabled else "Restoring default" if self.state.get("reset_choice") else "Choosing edit" if self.state["editing"] and phase=="select" else "Applying edit" if self.state["editing"] else "Ready to edit"
         self.paint_text("status",status)
         changed=self.last_enabled!=enabled
@@ -419,9 +431,60 @@ class AppUI:
         else:
             self.background_photo=ImageTk.PhotoImage(image);self.canvas.itemconfigure(self.background_item,image=self.background_photo)
             self.canvas.tag_lower(self.background_item)
+    def start_tray(self):
+        if os.name!="nt":return
+        try:
+            import pystray
+            self.tray_starting=True
+            menu=pystray.Menu(
+                pystray.MenuItem("Open Quick Edit",lambda icon,item:self.events.put(("show",None)),default=True),
+                pystray.MenuItem(lambda item:"Pause helper" if self.state["enabled"] else "Start helper",
+                    lambda icon,item:self.events.put(("toggle",None))),
+                pystray.Menu.SEPARATOR,
+                pystray.MenuItem("Quit",lambda icon,item:self.events.put(("quit",None))))
+            self.tray=pystray.Icon("sg0hann.QuickEdit",self.app_art.resize((64,64)),"Quick Edit • Paused",menu)
+            def setup(icon):
+                if self.stop.is_set():icon.stop();return
+                try:
+                    icon.visible=True;self.events.put(("tray_ready",None))
+                except Exception as error:
+                    self.events.put(("tray_error",str(error)));icon.stop()
+            def run():
+                try:
+                    self.tray.run(setup=setup)
+                    if not self.stop.is_set():self.events.put(("tray_error","Tray icon stopped"))
+                except Exception as error:
+                    if not self.stop.is_set():self.events.put(("tray_error",str(error)))
+            self.tray_thread=threading.Thread(target=run,name="QuickEdit-Tray",daemon=True)
+            self.tray_thread.start()
+        except Exception as error:
+            self.tray_starting=False;self.events.put(("tray_error",str(error)))
+    def update_tray(self):
+        enabled=bool(self.state["enabled"])
+        if not self.tray_ready or not self.tray or self.tray_enabled==enabled:return
+        try:
+            self.tray.title="Quick Edit • "+("Running" if enabled else "Paused")
+            self.tray.update_menu();self.tray_enabled=enabled
+        except Exception as error:
+            self.tray_ready=False;self.events.put(("tray_error",str(error)))
+    def hide_to_tray(self):
+        if self.tray_ready:
+            self.root.withdraw()
+        elif self.tray_starting:
+            self.last.set("Tray icon is starting. Try again in a moment.")
+        else:
+            self.close()  # Never strand a running app without a working tray icon.
+    def show_window(self):
+        self.root.deiconify();self.root.lift();self.root.focus_force()
     def close(self):
+        if self.closing:return
+        self.closing=True
         self.state["enabled"]=False;self.reset();self.stop.set()
+        if self.tray:
+            try:self.tray.stop()
+            except Exception:pass
         self.root.destroy()
+
 
 
 
@@ -449,7 +512,7 @@ def main():
         import mss
         import tkinter as tk
     except ImportError:
-        raise SystemExit("Install dependencies: py -m pip install pillow numpy mss")
+        raise SystemExit("Install dependencies: py -m pip install -r requirements.txt")
     if not 0 <= args.apply_delay_ms <= 200:
         parser.error("--apply-delay-ms must be between 0 and 200")
 

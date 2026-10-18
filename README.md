@@ -1,6 +1,6 @@
 # Creative Destruction — Quick Edit
 
-Windows edit helper by **sg0hann**. Current version: **1.11**.
+Windows edit helper by **sg0hann**. Current version: **1.12**.
 
 Press **G**, move to an edit shape, and the helper selects and applies it. Auto reset chooses the top/default shape and starts enabled.
 
@@ -25,6 +25,10 @@ No Python installation is needed for the built app. Close older helper instances
 | Esc | Cancel |
 
 Use windowed or borderless mode with `client.exe`. Keep **Select shape only** unchecked for automatic apply. **Auto reset (top/default)** can be turned ON or OFF. Green button and dot mean the helper is enabled.
+
+## Background / system tray
+
+Closing the window with **X** hides it to the Windows system tray; the helper keeps its current ON/OFF state. Right-click the Gohan tray icon to **Open Quick Edit**, **Start/Pause helper**, or **Quit**. Clicking the tray icon also reopens the window. **F10** exits completely, even with the window hidden.
 
 ## Wallpapers and performance
 
