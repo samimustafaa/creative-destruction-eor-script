@@ -135,7 +135,7 @@ def detect(image, cropped=False):
         "yellow": count, "sector": sector, "default": is_default, "build": round(build_contrast,2)}
 
 
-EDIT_KEY_NAMES={"Tab":0x09,"Space":0x20,"CapsLock":0x14,"Shift":0x10,"Ctrl":0x11,"Alt":0x12,
+EDIT_KEY_NAMES={"Enter":0x0D,"Backspace":0x08,"Tab":0x09,"Space":0x20,"CapsLock":0x14,"Shift":0x10,"Ctrl":0x11,"Alt":0x12,
     "Insert":0x2D,"Delete":0x2E,"Home":0x24,"End":0x23,"PageUp":0x21,"PageDown":0x22,
     "Up":0x26,"Down":0x28,"Left":0x25,"Right":0x27}
 EDIT_KEY_NAMES.update({"F"+str(i):0x6F+i for i in range(1,13) if i not in (6,10)})
@@ -148,6 +148,8 @@ def parse_edit_key(value):
     for name,vk in EDIT_KEY_NAMES.items():
         if name.casefold()==key.casefold():return name,vk
     raise ValueError("Use a keyboard key such as G, E, V, 1, Tab, Space or F1.")
+def edit_key_matches(vk,configured):
+    return vk==configured or vk in {0x10:(0xA0,0xA1),0x11:(0xA2,0xA3),0x12:(0xA4,0xA5)}.get(configured,())
 def edit_settings_path():
     from pathlib import Path
     return Path(os.environ.get("LOCALAPPDATA",str(Path.home())))/"CDQuickEdit"/"settings.json"
@@ -745,7 +747,7 @@ def main():
         if message in (0x101,0x105):
             keys_down.discard(quick.vkCode)
             return user.CallNextHookEx(None,code,message,data)
-        if quick.vkCode not in (0x79,0x75,0x1B,0x45,0x31,0x32,0x33,0x34,0x35,0x46,0x58,0x43,args.edit_vk):
+        if quick.vkCode not in (0x79,0x75,0x1B,0x45,0x31,0x32,0x33,0x34,0x35,0x46,0x58,0x43) and not edit_key_matches(quick.vkCode,args.edit_vk):
             return user.CallNextHookEx(None,code,message,data)
         with state_lock:
             if code >= 0:
@@ -762,7 +764,7 @@ def main():
                             state["enabled"] = not state["enabled"]
                             reset()
                             report("Running." if state["enabled"] else "Paused.")
-                        elif vk == args.edit_vk and state["enabled"]:
+                        elif edit_key_matches(vk,args.edit_vk) and state["enabled"]:
                             hwnd = foreground_game()
                             if hwnd:
                                 was_editing = state["editing"]

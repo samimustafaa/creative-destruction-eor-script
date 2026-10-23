@@ -37,7 +37,7 @@ class EditKeyChecks(unittest.TestCase):
         state={'enabled':True,'editing':False,'window':None}
         def reset():state.update(editing=False,window=None)
         user=types.SimpleNamespace(CallNextHookEx=lambda *a:0,GetCursorPos=lambda *a:False,GetAsyncKeyState=lambda *a:0)
-        env=dict(C=types.SimpleNamespace(cast=lambda data,kind:types.SimpleNamespace(contents=data),POINTER=lambda kind:kind,byref=ctypes.byref),KeyboardHook=object,W=wintypes,user=user,args=args,state=state,state_lock=threading.RLock(),keys_down=set(),reset=reset,foreground_game=lambda:foreground,wake=threading.Event(),notify_hooks=Mock(),report=Mock(),ui_events=queue.Queue())
+        env=dict(edit_key_matches=app.edit_key_matches,C=types.SimpleNamespace(cast=lambda data,kind:types.SimpleNamespace(contents=data),POINTER=lambda kind:kind,byref=ctypes.byref),KeyboardHook=object,W=wintypes,user=user,args=args,state=state,state_lock=threading.RLock(),keys_down=set(),reset=reset,foreground_game=lambda:foreground,wake=threading.Event(),notify_hooks=Mock(),report=Mock(),ui_events=queue.Queue())
         exec(compile(ast.Module(body=[fn],type_ignores=[]),'keyboard-test','exec'),env)
         def send(vk,up=False,flags=0):env['keyboard'](0,0x101 if up else 0x100,types.SimpleNamespace(vkCode=vk,flags=flags))
         return env,send
@@ -47,6 +47,10 @@ class EditKeyChecks(unittest.TestCase):
             send(vk);self.assertTrue(env['state']['editing'],key)
             send(vk);self.assertTrue(env['state']['editing'],'Repeat toggled edit')
             send(vk,up=True);send(vk);self.assertFalse(env['state']['editing'],key)
+    def test_modifier_keys_accept_both_windows_sides(self):
+        for key,codes in [("Shift",(160,161)),("Ctrl",(162,163)),("Alt",(164,165))]:
+            for vk in codes:
+                env,send=self.hook(key);send(vk);self.assertTrue(env["state"]["editing"])
     def test_old_key_ignored_and_old_release_cleans_key_state(self):
         env,send=self.hook('G');send(71);env['args'].edit_vk=69
         send(71,up=True);self.assertNotIn(71,env['keys_down'])
