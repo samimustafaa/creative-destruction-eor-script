@@ -1,12 +1,8 @@
-# Quick Edit v1.13.1
+# Quick Edit v1.14.0
 
-Made by sg0hann.
+- Click Edit key and press one keyboard key to choose it.
+- A new key replaces the previous selection instead of appending text.
+- Pasting and multi-key text are blocked.
+- Named keys such as Tab, Space, and Enter still represent one key.
 
-- New Edit key setting: use your own keyboard bind instead of G.
-- The selected key is remembered between launches; G remains the default.
-- On-screen instructions follow the selected key.
-- Custom edit keys take priority over default build/cancel shortcuts.
-- Shift, Ctrl and Alt support both left and right keys.
-- F6, F10, and Esc stay reserved for app controls.
-
-Set Edit key to match the game, Apply settings, then Start/F6.
+Click Apply settings after choosing the key. Your selection is saved between launches.

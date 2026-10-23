@@ -222,8 +222,10 @@ class AppUI:
             entry.bind("<Up>",lambda e,index=i:self.increment(index,1));entry.bind("<Down>",lambda e,index=i:self.increment(index,-1))
             self.entries.append(entry)
         self.process_entry=tk.Entry(self.canvas,textvariable=self.process,bg="#111115",fg="#d8d8e0",insertbackground="white",relief="flat",bd=0,highlightthickness=0,font=(UI_FONT,10))
-        self.key_entry=tk.Entry(self.canvas,textvariable=self.edit_key,bg="#111115",fg=self.TEXT,insertbackground="white",relief="flat",bd=0,font=(UI_FONT,13),justify="center")
-        self.key_entry.bind("<Return>",lambda event:self.apply())
+        self.key_entry=tk.Entry(self.canvas,textvariable=self.edit_key,state="readonly",readonlybackground="#111115",fg=self.TEXT,relief="flat",bd=0,font=(UI_FONT,13),justify="center",takefocus=True,exportselection=False)
+        self.key_entry.bind("<KeyPress>",self.capture_edit_key)
+        for sequence in ("<<Paste>>","<<PasteSelection>>","<Button-2>"):
+            self.key_entry.bind(sequence,lambda event:"break")
         self.canvas.bind("<Configure>",self.resize);self.canvas.bind("<Motion>",self.motion)
         self.canvas.bind("<Leave>",lambda e:self.set_hover(None));self.canvas.bind("<Button-1>",self.mouse_down);self.canvas.bind("<ButtonRelease-1>",self.mouse_up)
         self.canvas.bind("<KeyRelease-space>",lambda e:self._toggle_reset())
@@ -276,7 +278,7 @@ class AppUI:
         self.text(29,532,"Edit key",10,bold=True)
         self.shape((29,558,140,38),"#111115")
         c.create_window(99*self.scale_x,577*self.scale_y,window=self.key_entry,width=112*self.scale_x,height=27*self.scale_y,tags="ui")
-        self.text(185,558,"Match your in-game edit bind.\nThen click Apply settings.",9,width=230)
+        self.text(185,558,"Click here and press one key.\nThen click Apply settings.",9,width=230)
         self.text(490,109,"Response",14,bold=True);self.text(920,112,"Less waiting. More control.",9)
         for i,name in enumerate(self.PRESETS):
             self.button("preset_"+name,(490+i*163,137,154,35),name,lambda n=name:self.preset(n))
@@ -320,6 +322,17 @@ class AppUI:
     def input_focus(self,index):
         self.focused_input=index
         for i in range(4):self.canvas.itemconfigure("input_"+str(i),outline="#a7a7b4" if i==index else "#4a4a56")
+    def capture_edit_key(self,event):
+        # Capture one physical key; never let Entry append text or paste strings.
+        aliases={"Return":"Enter","KP_Enter":"Enter","ISO_Left_Tab":"Tab","Prior":"PageUp","Next":"PageDown",
+            "Caps_Lock":"CapsLock","Shift_L":"Shift","Shift_R":"Shift","Control_L":"Ctrl","Control_R":"Ctrl",
+            "Alt_L":"Alt","Alt_R":"Alt"}
+        try:
+            name,_=parse_edit_key(aliases.get(event.keysym,event.keysym))
+        except ValueError:
+            return "break"
+        self.edit_key.set(name)
+        return "break"
     def increment(self,index,direction):
         low,high=[(0,200),(0,200),(4,40),(60,360)][index]
         try:value=self.values[index].get()

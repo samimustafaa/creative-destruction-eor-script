@@ -1,6 +1,6 @@
 # Creative Destruction — Quick Edit
 
-Windows edit helper by **sg0hann**. Current version: **1.13**.
+Windows edit helper by **sg0hann**. Current version: **1.14**.
 
 Press your configured **Edit key** (default **G**), move to an edit shape, and the helper selects and applies it. Auto reset chooses the top/default shape and starts enabled.
 
@@ -28,7 +28,7 @@ Use windowed or borderless mode with `client.exe`. Keep **Select shape only** un
 
 ## Custom edit key
 
-Enter your in-game keyboard edit bind in **Edit key**, click **Apply settings**, then Start/F6. It is remembered between launches. Letters, numbers, Tab, Space, and common named keyboard keys are supported. F6, F10, and Esc remain reserved. For example, if your game uses E, set Edit key to E. The app does not change the bind inside the game.
+Click **Edit key** and press your in-game edit key, click **Apply settings**, then Start/F6. Each new key replaces the previous choice; typing strings and pasting are disabled. It is remembered between launches. Letters, numbers, Tab, Space, and common named keyboard keys are supported. F6, F10, and Esc remain reserved. For example, if your game uses E, set Edit key to E. The app does not change the bind inside the game.
 
 ## Background / system tray
 

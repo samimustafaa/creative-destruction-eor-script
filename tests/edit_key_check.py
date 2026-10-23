@@ -16,6 +16,15 @@ spec=importlib.util.spec_from_file_location('quickedit_keys',path)
 app=importlib.util.module_from_spec(spec);spec.loader.exec_module(app)
 
 class EditKeyChecks(unittest.TestCase):
+    def test_field_captures_one_key_and_replaces_previous_value(self):
+        ui=app.AppUI.__new__(app.AppUI);ui.edit_key=Mock()
+        for symbol,expected in [("f","F"),("v","V"),("1","1"),("space","Space"),("Tab","Tab"),("Return","Enter"),("Shift_R","Shift")]:
+            self.assertEqual(ui.capture_edit_key(types.SimpleNamespace(keysym=symbol)),"break")
+            ui.edit_key.set.assert_called_with(expected)
+        ui.edit_key.set.reset_mock()
+        for symbol in ["F6","F10","Escape","fffff","Ctrl+V","unknown"]:
+            self.assertEqual(ui.capture_edit_key(types.SimpleNamespace(keysym=symbol)),"break")
+        ui.edit_key.set.assert_not_called()
     def test_supported_and_reserved_keys(self):
         for text,name,vk in [('e','E',69),(' v ','V',86),('1','1',49),('tab','Tab',9),('SPACE','Space',32),('F1','F1',112),('F12','F12',123)]:
             self.assertEqual(app.parse_edit_key(text),(name,vk))
