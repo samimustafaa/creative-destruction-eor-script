@@ -1,8 +1,8 @@
 # Creative Destruction — Quick Edit
 
-Windows edit helper by **sg0hann**. Current version: **1.12**.
+Windows edit helper by **sg0hann**. Current version: **1.13**.
 
-Press **G**, move to an edit shape, and the helper selects and applies it. Auto reset chooses the top/default shape and starts enabled.
+Press your configured **Edit key** (default **G**), move to an edit shape, and the helper selects and applies it. Auto reset chooses the top/default shape and starts enabled.
 
 ## Download
 
@@ -21,10 +21,14 @@ No Python installation is needed for the built app. Close older helper instances
 | --- | --- |
 | F6 | Start / pause |
 | F10 | Exit |
-| G | Open / cancel an edit |
+| Edit key (default G) | Open / cancel an edit |
 | Esc | Cancel |
 
 Use windowed or borderless mode with `client.exe`. Keep **Select shape only** unchecked for automatic apply. **Auto reset (top/default)** can be turned ON or OFF. Green button and dot mean the helper is enabled.
+
+## Custom edit key
+
+Enter your in-game keyboard edit bind in **Edit key**, click **Apply settings**, then Start/F6. It is remembered between launches. Letters, numbers, Tab, Space, and common named keyboard keys are supported. F6, F10, and Esc remain reserved. For example, if your game uses E, set Edit key to E. The app does not change the bind inside the game.
 
 ## Background / system tray
 
@@ -64,4 +68,5 @@ py -3.12 tests/engine_check.py
 ```
 
 Hook lifecycle, timer cleanup, settings confirmations, and UI behavior were checked locally. Windows taskbar responsiveness and in-game timing still need testing on a Windows PC. This helper does not change game files or read game memory. Disable pre-edit is not implemented.
+
 

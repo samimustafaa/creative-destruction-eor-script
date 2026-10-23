@@ -1,10 +1,11 @@
-# Quick Edit v1.12.0
+# Quick Edit v1.13.0
 
 Made by sg0hann.
 
-- Closing the window hides it to the Windows system tray without stopping the helper.
-- Right-click the Gohan tray icon to Open, Start/Pause, or Quit.
-- Clicking the tray icon reopens the window. F10 still exits completely.
-- Hidden windows skip UI painting and foreground-process lookups.
+- New Edit key setting: use your own keyboard bind instead of G.
+- The selected key is remembered between launches; G remains the default.
+- On-screen instructions follow the selected key.
+- Custom edit keys take priority over default build/cancel shortcuts.
+- F6, F10, and Esc stay reserved for app controls.
 
-Download QuickEdit.exe or extract QuickEdit-Windows.zip. Complete source and assets are in QuickEdit-source.zip.
+Set Edit key to match the game, Apply settings, then Start/F6.

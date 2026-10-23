@@ -1,8 +1,10 @@
 QUICK EDIT — made by sg0hann
 
 Open QuickEdit.exe, click Start, then return to Creative Destruction.
-Edit: press G and move to your shape. The app confirms and applies it.
-Reset: press G and move to the TOP/default shape. It restores automatically.
+Set Edit key to match your in-game keyboard bind, then Apply settings.
+Your edit key is remembered. Default: G.
+Edit: press your Edit key and move to your shape. The app confirms and applies it.
+Reset: press your Edit key and move to the TOP/default shape. It restores automatically.
 Auto reset uses an ON/OFF switch and starts ON. The switch applies immediately.
 Keep Select shape only unchecked for automatic apply.
 
@@ -22,3 +24,4 @@ Settings-applied confirmations are bigger and green.
 Green button + green dot mean the helper is ON.
 
 YouTube: https://www.youtube.com/@sg0hann
+

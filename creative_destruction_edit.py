@@ -3,17 +3,17 @@
 Install: py -m pip install -r requirements.txt
 Run the Windows app: QuickEdit.exe
 Source version: py creative_destruction_edit.py
-Click Start, return to the game, press G and move to a highlighted edit.
+Click Start, return to the game, press your configured edit key and move to a highlighted edit.
 F6 starts/pauses; F10 exits. No game files or memory are modified.
 
 Native region capture, cached text alignment, configurable short delays,
-foreground-process gating and one select/apply sequence per G entry.
+foreground-process gating and one select/apply sequence per edit entry.
 360 Hz, Fast, Balanced and Careful presets are available in the UI.
 360 Hz is a scan target; actual scan speed is shown in the UI and depends on
 capture/detection cost. Static JPG/PNG backgrounds are painted only when changed. Lower click hold
 can miss inputs on some clients: increase it if a click does not register.
 The processing time shown in the UI excludes game rendering/network delay.
-Auto reset confirms/applies the top/default choice after you move to it in G.
+Auto reset confirms/applies the top/default choice after you move to it in the edit menu.
 It uses the same automatic timing as editing; no extra reset button is needed.
 
 Use windowed/borderless mode and the normal centered HUD. Detection has been
@@ -135,6 +135,41 @@ def detect(image, cropped=False):
         "yellow": count, "sector": sector, "default": is_default, "build": round(build_contrast,2)}
 
 
+EDIT_KEY_NAMES={"Tab":0x09,"Space":0x20,"CapsLock":0x14,"Shift":0x10,"Ctrl":0x11,"Alt":0x12,
+    "Insert":0x2D,"Delete":0x2E,"Home":0x24,"End":0x23,"PageUp":0x21,"PageDown":0x22,
+    "Up":0x26,"Down":0x28,"Left":0x25,"Right":0x27}
+EDIT_KEY_NAMES.update({"F"+str(i):0x6F+i for i in range(1,13) if i not in (6,10)})
+def parse_edit_key(value):
+    """Normalize a keyboard edit bind to its Windows virtual-key code."""
+    key=value.strip()
+    if key.casefold() in ("f6","f10","esc","escape"):
+        raise ValueError("F6, F10 and Esc are reserved. Choose another edit key.")
+    if len(key)==1 and key.isascii() and key.isalnum():return key.upper(),ord(key.upper())
+    for name,vk in EDIT_KEY_NAMES.items():
+        if name.casefold()==key.casefold():return name,vk
+    raise ValueError("Use a keyboard key such as G, E, V, 1, Tab, Space or F1.")
+def edit_settings_path():
+    from pathlib import Path
+    return Path(os.environ.get("LOCALAPPDATA",str(Path.home())))/"CDQuickEdit"/"settings.json"
+def load_edit_key():
+    import json
+    try:return parse_edit_key(json.loads(edit_settings_path().read_text(encoding="utf-8"))["edit_key"])[0]
+    except (OSError,ValueError,TypeError,KeyError):return "G"
+def save_edit_key(key):
+    import json
+    path=edit_settings_path()
+    try:
+        saved=json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(saved,dict):saved={}
+    except (OSError,ValueError):saved={}
+    saved["edit_key"]=key
+    path.parent.mkdir(parents=True,exist_ok=True)
+    temporary=path.with_suffix(".tmp")
+    try:
+        temporary.write_text(json.dumps(saved,indent=2),encoding="utf-8")
+        os.replace(temporary,path)
+    finally:temporary.unlink(missing_ok=True)
+
 UI_FONT = "Segoe UI" if os.name == "nt" else "DejaVu Sans"
 
 def resource_path(name):
@@ -164,6 +199,7 @@ class AppUI:
         self.values=[tk.IntVar(value=v) for v in (args.stable_ms,args.apply_delay_ms,args.click_ms,args.scan_hz)]
         self.auto_reset=tk.BooleanVar(value=getattr(args,"auto_reset",True));self.select_only=tk.BooleanVar(value=args.select_only)
         self.process=tk.StringVar(value=args.process)
+        self.edit_key=tk.StringVar(value=getattr(args,"edit_key","G"))
         self.entries=[];self.focused_input=None;self.hitboxes=[];self.button_shapes={};self.last_source=None
         self.background_photo=None;self.header_icon=None;self.cd_logo=None;self.app_art=None;self.cd_art=None;self.wallpaper_error=None
         self.overlay_cache=None;self.paint_cache={};self.last_enabled=None;self.last_canvas_size=None
@@ -184,6 +220,8 @@ class AppUI:
             entry.bind("<Up>",lambda e,index=i:self.increment(index,1));entry.bind("<Down>",lambda e,index=i:self.increment(index,-1))
             self.entries.append(entry)
         self.process_entry=tk.Entry(self.canvas,textvariable=self.process,bg="#111115",fg="#d8d8e0",insertbackground="white",relief="flat",bd=0,highlightthickness=0,font=(UI_FONT,10))
+        self.key_entry=tk.Entry(self.canvas,textvariable=self.edit_key,bg="#111115",fg=self.TEXT,insertbackground="white",relief="flat",bd=0,font=(UI_FONT,13),justify="center")
+        self.key_entry.bind("<Return>",lambda event:self.apply())
         self.canvas.bind("<Configure>",self.resize);self.canvas.bind("<Motion>",self.motion)
         self.canvas.bind("<Leave>",lambda e:self.set_hover(None));self.canvas.bind("<Button-1>",self.mouse_down);self.canvas.bind("<ButtonRelease-1>",self.mouse_up)
         self.canvas.bind("<KeyRelease-space>",lambda e:self._toggle_reset())
@@ -231,8 +269,12 @@ class AppUI:
         self.text(29,330,"Processing —",9,tag="metrics",width=380)
         self.text(29,374,self.last.get(),10,tag="last",width=380)
         self.text(29,425,"F6  Start / pause   ·   F10  Exit",9)
-        self.text(29,453,"G → choose shape → automatic apply",9)
+        self.text(29,453,f"{getattr(self.args,'edit_key','G')} → choose shape → automatic apply",9,tag="edit_hint")
         self.text(29,485,"Close window → system tray. Right-click → Quit.",9,color=self.MUTED)
+        self.text(29,532,"Edit key",10,bold=True)
+        self.shape((29,558,140,38),"#111115")
+        c.create_window(99*self.scale_x,577*self.scale_y,window=self.key_entry,width=112*self.scale_x,height=27*self.scale_y,tags="ui")
+        self.text(185,558,"Match your in-game edit bind.\nThen click Apply settings.",9,width=230)
         self.text(490,109,"Response",14,bold=True);self.text(920,112,"Less waiting. More control.",9)
         for i,name in enumerate(self.PRESETS):
             self.button("preset_"+name,(490+i*163,137,154,35),name,lambda n=name:self.preset(n))
@@ -316,7 +358,7 @@ class AppUI:
         self.state["enabled"]=not self.state["enabled"];self.reset();self.refresh(schedule=False)
     def preset(self,name):
         for var,value in zip(self.values,self.PRESETS[name]):var.set(value)
-        self.apply();self.show_success(name+" applied.\nStart or press F6 to resume.")
+        if self.apply():self.show_success(name+" applied.\nStart or press F6 to resume.")
     def paint_presets(self):
         try:values=tuple(v.get() for v in self.values)
         except Exception:return
@@ -329,13 +371,17 @@ class AppUI:
             values=[v.get() for v in self.values]
             for v,(lo,hi) in zip(values,[(0,200),(0,200),(4,40),(60,360)]):
                 if not lo<=v<=hi:raise ValueError("A response setting is outside its allowed range.")
+            key_name,key_vk=parse_edit_key(self.edit_key.get())
             process=self.process.get().strip()
             if not process.lower().endswith(".exe") or any(x in process for x in ("/","\\")):raise ValueError("Use an executable filename, such as client.exe.")
-        except Exception as error:self.messagebox.showerror("Check settings",str(error),parent=self.root);return
+            save_edit_key(key_name)
+        except Exception as error:self.messagebox.showerror("Check settings",str(error),parent=self.root);return False
         self.state["enabled"]=False;self.reset()
         self.args.stable_ms,self.args.apply_delay_ms,self.args.click_ms,self.args.scan_hz=values
+        self.args.edit_key,self.args.edit_vk=key_name,key_vk;self.edit_key.set(key_name)
         self.args.select_only=self.select_only.get();self.args.auto_reset=self.auto_reset.get();self.args.process=process
         self.paint_presets();self.show_success("Settings applied.\nStart or press F6 to resume.");self.refresh(schedule=False)
+        return True
     def paint_text(self,tag,value):
         if self.paint_cache.get(tag)!=value:
             self.canvas.itemconfigure(tag,text=value);self.paint_cache[tag]=value
@@ -372,7 +418,9 @@ class AppUI:
         if changed and hasattr(self,"dot"):
             self.canvas.itemconfigure(self.dot,fill="#4ee38a" if enabled else "#a6a6b0")
         self.paint_text("process_status","Focused / "+self.args.process if game else "Waiting for "+self.args.process)
-        self.paint_text("detail","Press G and move to your edit. The clicks are automatic." if enabled else "Start the helper, return to your game, then press G.")
+        edit_key=getattr(self.args,"edit_key","G")
+        self.paint_text("detail",f"Press {edit_key} and move to your edit. The clicks are automatic." if enabled else f"Start the helper, return to your game, then press {edit_key}.")
+        self.paint_text("edit_hint",f"{edit_key} → choose shape → automatic apply")
         self.paint_text("label_start","Pause helper  /  F6" if enabled else "Start helper  /  F6")
         self.paint_text("metrics",f"Processing {self.stats['processing_ms']:.1f} ms  /  Scan {self.stats.get('actual_hz',0):.0f} Hz\nApply clicks {self.stats['applied']}")
         if changed and self.hover_timer is None:self.animate_hover()
@@ -492,6 +540,7 @@ def main():
     if os.name != "nt":
         raise SystemExit("This helper requires Windows.")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--edit-key",default=load_edit_key(),help="Keyboard edit bind, for example G, E, V, Tab or Space")
     parser.add_argument("--process", default="client.exe", help="Foreground game executable filename")
     parser.add_argument("--apply-delay-ms", type=int, default=8, help="Wait before applying, 0-200 ms")
     parser.add_argument("--select-only", action="store_true")
@@ -501,6 +550,8 @@ def main():
     parser.add_argument("--click-ms",type=int,default=8)
     parser.add_argument("--scan-hz",type=int,default=144)
     args = parser.parse_args()
+    try:args.edit_key,args.edit_vk=parse_edit_key(args.edit_key)
+    except ValueError as error:parser.error(str(error))
     if not 0 <= args.stable_ms <= 200:
         parser.error("--stable-ms must be between 0 and 200")
     if not 4 <= args.click_ms <= 40 or not 60 <= args.scan_hz <= 360:
@@ -689,7 +740,12 @@ def main():
         # Ignore unrelated keys without acquiring the engine lock.
         if code < 0:return user.CallNextHookEx(None,code,message,data)
         quick=C.cast(data,C.POINTER(KeyboardHook)).contents
-        if quick.flags & 0x10 or quick.vkCode not in (0x79,0x75,0x1B,0x45,0x31,0x32,0x33,0x34,0x35,0x46,0x58,0x43,0x47):
+        if quick.flags & 0x10:return user.CallNextHookEx(None,code,message,data)
+        # Always release old key state, even when the bind changed while a key was held.
+        if message in (0x101,0x105):
+            keys_down.discard(quick.vkCode)
+            return user.CallNextHookEx(None,code,message,data)
+        if quick.vkCode not in (0x79,0x75,0x1B,0x45,0x31,0x32,0x33,0x34,0x35,0x46,0x58,0x43,args.edit_vk):
             return user.CallNextHookEx(None,code,message,data)
         with state_lock:
             if code >= 0:
@@ -706,11 +762,7 @@ def main():
                             state["enabled"] = not state["enabled"]
                             reset()
                             report("Running." if state["enabled"] else "Paused.")
-                        elif vk in (0x1B, 0x45, 0x31, 0x32, 0x33, 0x34, 0x35):
-                            reset()
-                        elif vk in (0x46, 0x58, 0x43):  # F, X, C select builds
-                            reset()
-                        elif vk == 0x47 and state["enabled"]:
+                        elif vk == args.edit_vk and state["enabled"]:
                             hwnd = foreground_game()
                             if hwnd:
                                 was_editing = state["editing"]
@@ -722,6 +774,10 @@ def main():
                                     state["last_pos"] = (cursor.x,cursor.y)
                                 state["manual_held"]=bool(user.GetAsyncKeyState(1)&0x8000)
                                 wake.set();notify_hooks()
+                        elif vk in (0x1B, 0x45, 0x31, 0x32, 0x33, 0x34, 0x35):
+                            reset()
+                        elif vk in (0x46, 0x58, 0x43):  # F, X, C select builds
+                            reset()
         return user.CallNextHookEx(None, code, message, data)
 
 
@@ -948,4 +1004,5 @@ if __name__ == "__main__":
             messagebox.showerror("CD Quick Edit", "Could not start the helper.\n\n"+error.splitlines()[-1]+"\n\nDetails: "+str(log))
         except Exception:
             print(error)
+
 

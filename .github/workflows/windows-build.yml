@@ -32,6 +32,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tests/tray_check.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tests/edit_key_check.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build EXE
         shell: pwsh
         run: ./build.ps1
@@ -71,3 +73,4 @@ jobs:
             release-files/QuickEdit.exe QuickEdit-Windows.zip QuickEdit-source.zip creative_destruction_edit.py \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "Quick Edit v$version" --notes-file RELEASE_NOTES.md
+
